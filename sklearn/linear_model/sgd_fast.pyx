@@ -5,7 +5,7 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD Style.
 
 
 import numpy as np
@@ -31,6 +31,7 @@ DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
+DEF LINF = 4
 
 # Learning rate constants
 DEF CONSTANT = 1
@@ -480,16 +481,40 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
             update *= class_weight * sample_weight
 
-            if penalty_type >= L2:
-                w.scale(1.0 - (rho * eta * alpha))
             if update != 0.0:
                 w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                 if fit_intercept == 1:
                     intercept += update * intercept_decay
+            if penalty_type == L2 or penalty_type == ELASTICNET:
+                w.scale(1.0 - (rho * eta * alpha))
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
                 l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
+
+            if penalty_type == LINF:
+                pos_crosses = weights > alpha
+                weights[pos_crosses] = alpha
+                neg_crosses = weights < (-alpha)
+                weights[neg_crosses] = -alpha
+
+                # if pos_crosses.sum() > 0:
+                    # print "\n%d pos. crosses" % pos_crosses.sum()
+                    # print weights[pos_crosses]
+                    # print "After pos. update"
+
+                    # print weights[pos_crosses]
+
+                # if neg_crosses.sum() > 0:
+                #     print "\n%d neg. crosses" % neg_crosses.sum()
+                #     print weights[neg_crosses]
+                #     print "After neg. update"
+                #
+                #     print weights[neg_crosses]
+
+
+                #weights[weights < -alpha] = -alpha
+
             t += 1
             count += 1
 
@@ -505,7 +530,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         # floating-point under-/overflow check.
         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
            or np.isnan(intercept) or np.isinf(intercept):
-            raise ValueError("floating-point under-/overflow occurred.")
+            raise ValueError("floating-point under-/overflow occured.")
 
     w.reset_wscale()
 

@@ -37,7 +37,7 @@ from .sgd_fast import SquaredEpsilonInsensitive
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "pa1": 4, "pa2": 5}
 
-PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
+PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3, "linf": 4}
 
 SPARSE_INTERCEPT_DECAY = 0.01
 """For sparse data intercept updates are scaled by this decay factor to avoid
