@@ -497,27 +497,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
             if box_size > 0.0:
-                pos_crosses = weights > box_size
-                weights[pos_crosses] = box_size
-                neg_crosses = weights < (-box_size)
-                weights[neg_crosses] = -box_size
-
-                # if pos_crosses.sum() > 0:
-                    # print "\n%d pos. crosses" % pos_crosses.sum()
-                    # print weights[pos_crosses]
-                    # print "After pos. update"
-
-                    # print weights[pos_crosses]
-
-                # if neg_crosses.sum() > 0:
-                #     print "\n%d neg. crosses" % neg_crosses.sum()
-                #     print weights[neg_crosses]
-                #     print "After neg. update"
-                #
-                #     print weights[neg_crosses]
-
-
-                #weights[weights < -alpha] = -alpha
+                w.truncate(box_size)
 
             t += 1
             count += 1

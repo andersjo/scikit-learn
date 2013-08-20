@@ -124,3 +124,15 @@ cdef class WeightVector(object):
     cdef double norm(self):
         """The L2 norm of the weight vector. """
         return sqrt(self.sq_norm)
+
+    cdef void truncate(self, double box_size):
+        """Element-wise truncation of weight vector to box_size"""
+        cdef double scaled_box_size = box_size*self.wscale
+        cdef int j
+        cdef DOUBLE* w_data_ptr = self.w_data_ptr
+
+        for j in range(self.n_features):
+            if w_data_ptr[j] > scaled_box_size:
+                w_data_ptr[j] = scaled_box_size
+            elif w_data_ptr[j] < (-scaled_box_size):
+                w_data_ptr[j] = -scaled_box_size

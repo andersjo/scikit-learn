@@ -25,3 +25,4 @@ cdef class WeightVector(object):
     cdef void scale(self, double c)
     cdef void reset_wscale(self)
     cdef double norm(self)
+    cdef void truncate(self, double box_size)
