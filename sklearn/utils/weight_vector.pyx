@@ -136,12 +136,19 @@ cdef class WeightVector(object):
         cdef DOUBLE* w_data_ptr = self.w_data_ptr
 
         for j in range(self.n_features):
-            if w_data_ptr[j] > scaled_box_size:
-                w_data_ptr[j] = scaled_box_size
-            elif w_data_ptr[j] < (-scaled_box_size):
-                w_data_ptr[j] = -scaled_box_size
+            # if w_data_ptr[j] > scaled_box_size:
+            #     w_data_ptr[j] = scaled_box_size
+            # elif w_data_ptr[j] < (-scaled_box_size):
+            #     w_data_ptr[j] = -scaled_box_size
+            # Safe but slow implementation
+            if self.w[j] > scaled_box_size:
+                self.w[j] = scaled_box_size
+            elif self.w[j] < (-scaled_box_size):
+                self.w[j] = -scaled_box_size
 
         # Update the norm. There might be a faster way to do this
+        # print "before SQ-norm", self.sq_norm
         self.sq_norm = np.dot(self.w*self.wscale, self.w*self.wscale)
+        # print "SQ-norm", self.sq_norm
 
 

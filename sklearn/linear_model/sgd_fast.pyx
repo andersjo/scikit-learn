@@ -496,7 +496,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 u += ((1.0 - rho) * eta * alpha)
                 l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
-            if box_size > 0.0:
+            if box_size != 0.0:
                 w.truncate(box_size)
 
             t += 1
