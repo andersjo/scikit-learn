@@ -79,6 +79,7 @@ cdef class WeightVector(object):
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
+
     cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
         """Computes the dot product of a sample x and the weight vector.
 
@@ -126,7 +127,10 @@ cdef class WeightVector(object):
         return sqrt(self.sq_norm)
 
     cdef void truncate(self, double box_size):
-        """Element-wise truncation of weight vector to box_size"""
+        """Element-wise truncation of weight vector to box_size.
+
+        Updates ``sq_norm``.
+        """
         cdef double scaled_box_size = box_size*self.wscale
         cdef int j
         cdef DOUBLE* w_data_ptr = self.w_data_ptr
@@ -136,3 +140,8 @@ cdef class WeightVector(object):
                 w_data_ptr[j] = scaled_box_size
             elif w_data_ptr[j] < (-scaled_box_size):
                 w_data_ptr[j] = -scaled_box_size
+
+        # Update the norm. There might be a faster way to do this
+        self.sq_norm = np.dot(self.w*self.wscale, self.w*self.wscale)
+
+
