@@ -31,7 +31,6 @@ DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
-DEF LINF = 4
 
 # Learning rate constants
 DEF CONSTANT = 1
@@ -338,7 +337,9 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
-              double intercept_decay=1.0):
+              double intercept_decay=1.0,
+              double box_size=0.0
+              ):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
@@ -386,6 +387,9 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     t : double
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
+        Default: 1.0.
+    box_size : double
+        Parameter for L_inf regularization. Not used if 0.0
         Default: 1.0.
 
     Returns
@@ -492,11 +496,11 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 u += ((1.0 - rho) * eta * alpha)
                 l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
-            if penalty_type == LINF:
-                pos_crosses = weights > alpha
-                weights[pos_crosses] = alpha
-                neg_crosses = weights < (-alpha)
-                weights[neg_crosses] = -alpha
+            if box_size > 0.0:
+                pos_crosses = weights > box_size
+                weights[pos_crosses] = box_size
+                neg_crosses = weights < (-box_size)
+                weights[neg_crosses] = -box_size
 
                 # if pos_crosses.sum() > 0:
                     # print "\n%d pos. crosses" % pos_crosses.sum()

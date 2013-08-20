@@ -37,7 +37,7 @@ from .sgd_fast import SquaredEpsilonInsensitive
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "pa1": 4, "pa2": 5}
 
-PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3, "linf": 4}
+PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 SPARSE_INTERCEPT_DECAY = 0.01
 """For sparse data intercept updates are scaled by this decay factor to avoid
@@ -54,7 +54,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 warm_start=False):
+                 warm_start=False, box_size=None):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -70,6 +70,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.eta0 = eta0
         self.power_t = power_t
         self.warm_start = warm_start
+        self.box_size = box_size
 
         self._validate_params()
 
@@ -121,6 +122,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             eta0 = typw / max(1.0, loss_function.dloss(-typw, 1.0))
             # initialize t such that eta at first sample equals eta0
             self.t_ = 1.0 / (eta0 * self.alpha)
+        if self.box_size is None:
+            self.box_size = 0.0
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -277,7 +280,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                      int(est.verbose), int(est.shuffle), est.random_state,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
-                     est.power_t, est.t_, intercept_decay)
+                     est.power_t, est.t_, intercept_decay, est.box_size)
 
 
 class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
@@ -301,7 +304,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, seed=None):
+                 class_weight=None, warm_start=False, seed=None, box_size=None):
 
         if seed is not None:
             warnings.warn("Parameter 'seed' was renamed to 'random_state' for"
@@ -318,7 +321,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                 random_state=random_state,
                                                 learning_rate=learning_rate,
                                                 eta0=eta0, power_t=power_t,
-                                                warm_start=warm_start)
+                                                warm_start=warm_start,
+                                                box_size=box_size)
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
@@ -621,6 +625,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    box_size : float, optional
+        If given, truncates updates of parameters larger than box_size
+        to box_size. This is L_inf regularization.
+
+
     Attributes
     ----------
     `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
@@ -657,14 +666,14 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, seed=None):
+                 class_weight=None, warm_start=False, seed=None, box_size=None):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
             verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
-            seed=seed)
+            seed=seed, box_size=box_size)
 
     def predict_proba(self, X):
         """Probability estimates.
